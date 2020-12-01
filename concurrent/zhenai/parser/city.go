@@ -12,20 +12,16 @@ var (
 	cityUrlRe = regexp.MustCompile(`href="(http://localhost:8080/mock/www.zhenai.com/zhenghun/suining2/[^"]+)"`)
 )
 
-func ParseCity(contents []byte) engine.ParseResult {
+func ParseCity(contents []byte, _ string) engine.ParseResult {
 	matches := profileRe.FindAllSubmatch(contents, -1)
 
 	result := engine.ParseResult{}
 	for _, m := range matches {
-		name := string(m[2])
-		result.Items = append(
-			result.Items, "User "+name)
+		url := string(m[1])
 		result.Requests = append(
 			result.Requests, engine.Request{
-				Url: string(m[1]),
-				ParseFunc: func(bytes []byte) engine.ParseResult {
-					return ParseProfile(bytes, name) // 闭包传递用户名字
-				},
+				Url:        url,
+				ParserFunc: ProfileParser(string(m[2])),
 			})
 	}
 
@@ -33,8 +29,8 @@ func ParseCity(contents []byte) engine.ParseResult {
 	for _, m := range matches {
 		result.Requests = append(
 			result.Requests, engine.Request{
-				Url:       string(m[1]),
-				ParseFunc: ParseCity,
+				Url:        string(m[1]),
+				ParserFunc: ParseCity,
 			},
 		)
 	}
