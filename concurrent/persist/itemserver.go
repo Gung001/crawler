@@ -22,7 +22,7 @@ func ItemSaver(index string) (chan engine.Item, error) {
 			item := <-out
 			log.Printf("ItemSaver got item #%d  %v", itemCount, item)
 			itemCount++
-			err := save(client, item, index)
+			err := Save(client, item, index)
 			if err != nil {
 				log.Printf("ItemSaver saving error %v %v", err, item)
 			}
@@ -31,7 +31,7 @@ func ItemSaver(index string) (chan engine.Item, error) {
 	return out, nil
 }
 
-func save(client *elastic.Client, item engine.Item, index string) error {
+func Save(client *elastic.Client, item engine.Item, index string) error {
 	client, err := elastic.NewClient(elastic.SetSniff(false))
 	if err != nil {
 		return nil

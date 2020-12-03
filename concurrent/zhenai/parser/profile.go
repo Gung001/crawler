@@ -3,6 +3,7 @@ package parser
 import (
 	"crawler.com/concurrent/engine"
 	"crawler.com/concurrent/model"
+	"crawler.com/distributed/config"
 	"regexp"
 	"strconv"
 )
@@ -41,7 +42,7 @@ var nameRe = regexp.MustCompile(
 var idReg = regexp.MustCompile(
 	`http://localhost:8080/mock/album.zhenai.com/u/([\d]+)`)
 
-func ParseProfile(content []byte, name string, url string) engine.ParseResult {
+func parseProfile(content []byte, name string, url string) engine.ParseResult {
 
 	profile := model.Profile{}
 
@@ -76,8 +77,8 @@ func ParseProfile(content []byte, name string, url string) engine.ParseResult {
 		url := string(m[1])
 		result.Requests = append(result.Requests,
 			engine.Request{
-				Url:        url,
-				ParserFunc: ProfileParser(name),
+				Url:    url,
+				Parser: NewProfileParser(name),
 			},
 		)
 	}
@@ -85,10 +86,20 @@ func ParseProfile(content []byte, name string, url string) engine.ParseResult {
 	return result
 }
 
-func ProfileParser(name string) engine.ParserFunc {
-	return func(c []byte, url string) engine.ParseResult {
-		return ParseProfile(c, name, url)
-	}
+type ProfileParser struct {
+	userName string
+}
+
+func (p *ProfileParser) Parse(content []byte, url string) engine.ParseResult {
+	return parseProfile(content, p.userName, url)
+}
+
+func (p *ProfileParser) Serialize() (name string, args interface{}) {
+	return config.ParseProfile, p.userName
+}
+
+func NewProfileParser(name string) *ProfileParser {
+	return &ProfileParser{userName: name}
 }
 
 func extractString(content []byte, re *regexp.Regexp) string {
